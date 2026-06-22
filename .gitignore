@@ -1,0 +1,57 @@
+# --- OS files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# --- Editor / IDE ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Claude Code (local, machine-specific) ---
+.claude/settings.local.json
+
+# --- Environment & secrets ---
+.env
+.env.*
+!.env.example
+*.local
+secrets.*
+*.pem
+*.key
+
+# --- Dependencies ---
+node_modules/
+.pnp/
+.pnp.js
+vendor/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Build output ---
+dist/
+build/
+out/
+*.log
+
+# --- Misc ---
+tmp/
+.cache/
+coverage/

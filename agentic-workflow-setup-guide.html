@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic Dev Workflow — Setup Guide</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --card2:#1d212b; --ink:#e8eaf0; --muted:#9aa3b2;
+    --line:#2a2f3a; --accent:#d97757; --accent2:#6ea8fe; --green:#54c08a; --purple:#b388f5;
+    --code:#11141a; --chip:#222734;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;font-size:16px}
+  .wrap{max-width:880px;margin:0 auto;padding:40px 24px 80px}
+  header.hero{text-align:center;padding:36px 24px;border:1px solid var(--line);
+    border-radius:18px;background:linear-gradient(160deg,#1a1e27,#13161d)}
+  header.hero h1{margin:0 0 8px;font-size:30px;letter-spacing:-.3px}
+  header.hero p{margin:0;color:var(--muted);font-size:16px}
+  .badges{margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .badge{background:var(--chip);border:1px solid var(--line);border-radius:999px;
+    padding:6px 14px;font-size:13px;color:var(--ink)}
+
+  /* flow diagram */
+  .flow{margin:30px 0;display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;justify-content:center}
+  .node{flex:1;min-width:120px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:14px 12px;text-align:center}
+  .node .ic{font-size:24px}
+  .node .nm{font-weight:600;margin-top:6px;font-size:14px}
+  .node .ds{color:var(--muted);font-size:12px;margin-top:2px}
+  .arrow{display:flex;align-items:center;color:var(--accent);font-size:22px;font-weight:700}
+
+  .step{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px;margin:20px 0;position:relative;overflow:hidden}
+  .step:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent)}
+  .step h2{margin:0 0 4px;font-size:20px;display:flex;align-items:center;gap:12px}
+  .num{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+    border-radius:50%;background:var(--accent);color:#1a1206;font-weight:800;font-size:16px;flex:none}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 16px 46px}
+  .body{margin-left:46px}
+  .step.git:before{background:var(--accent2)} .step.git .num{background:var(--accent2);color:#06122a}
+  .step.slack:before{background:var(--purple)} .step.slack .num{background:var(--purple);color:#1a0c2e}
+  .step.daily:before{background:var(--green)} .step.daily .num{background:var(--green);color:#04210f}
+
+  ol.checks{list-style:none;margin:0;padding:0;counter-reset:c}
+  ol.checks li{position:relative;padding:8px 0 8px 30px;border-bottom:1px dashed var(--line)}
+  ol.checks li:last-child{border-bottom:none}
+  ol.checks li:before{content:"";position:absolute;left:0;top:13px;width:16px;height:16px;
+    border:2px solid var(--accent);border-radius:5px}
+  .step.git ol.checks li:before{border-color:var(--accent2)}
+  .step.slack ol.checks li:before{border-color:var(--purple)}
+  .step.daily ol.checks li:before{border-color:var(--green)}
+
+  code{background:var(--chip);padding:2px 7px;border-radius:6px;font-size:13.5px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;color:#ffd9c7}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;overflow:auto;margin:12px 0}
+  pre code{background:none;padding:0;color:#cfe7d6}
+  .tip{background:#15211b;border:1px solid #244a37;border-radius:10px;padding:12px 14px;
+    margin:14px 0;font-size:14px;color:#bfe6cf}
+  .warn{background:#241818;border:1px solid #5a2d2d;border-radius:10px;padding:12px 14px;
+    margin:14px 0;font-size:14px;color:#f1c4bb}
+  .tip b,.warn b{color:#fff}
+  .pill{display:inline-block;background:var(--chip);border:1px solid var(--line);
+    border-radius:6px;padding:1px 8px;font-size:12px;color:var(--muted);margin-left:6px}
+  a{color:var(--accent2)}
+  .scene{background:var(--card2);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;margin:12px 0;font-size:13.5px;color:var(--muted)}
+  .scene b{color:var(--ink)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
+  h3.section{margin:42px 0 4px;font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>🤖 Your Agentic Dev Workflow</h1>
+    <p>VS Code · Claude Code · GitHub · Slack — the full loop, from zero</p>
+    <div class="badges">
+      <span class="badge">🍎 macOS</span>
+      <span class="badge">⏱️ ~45 min</span>
+      <span class="badge">🎯 Code → Commit → PR → Notify</span>
+    </div>
+  </header>
+
+  <h3 class="section">The Big Picture</h3>
+  <p style="color:var(--muted)">Here's the loop you're building. You talk to Claude in VS Code; Claude writes and edits code; your work flows to GitHub as commits and pull requests; Slack keeps you (and Claude) in the loop — and you can even kick off coding tasks by typing <code>@Claude</code> right inside Slack or a GitHub issue.</p>
+
+  <div class="flow">
+    <div class="node"><div class="ic">💬</div><div class="nm">You + Claude</div><div class="ds">in VS Code</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="ic">📝</div><div class="nm">Code</div><div class="ds">written &amp; edited</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="ic">🐙</div><div class="nm">GitHub</div><div class="ds">commits &amp; PRs</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="ic">💬</div><div class="nm">Slack</div><div class="ds">notify &amp; trigger</div></div>
+  </div>
+
+  <h3 class="section">Setup — Five Steps</h3>
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <h2><span class="num">1</span> Install Claude Code <span class="pill">Terminal</span></h2>
+    <p class="sub">The engine of the whole workflow — Claude that lives in your terminal and editor.</p>
+    <div class="body">
+      <p>Open the <b>Terminal</b> app (press <code>Cmd+Space</code>, type "Terminal", hit Enter) and paste:</p>
+      <pre><code>curl -fsSL https://claude.ai/install.sh | bash</code></pre>
+      <p>Then start it and sign in:</p>
+      <pre><code>claude</code></pre>
+      <div class="scene">🖼️ <b>What you'll see:</b> a browser tab opens asking you to log in. Use your existing paid Claude account. Approve, return to Terminal — you're in.</div>
+      <div class="warn">⚠️ <b>Don't set <code>ANTHROPIC_API_KEY</code>.</b> If that environment variable exists, Claude Code bills per-token instead of using your subscription. Leave it unset.</div>
+      <div class="tip">💡 If <code>claude</code> says "command not found", run:<br>
+        <code>echo 'export PATH="$HOME/.local/bin:$PATH"' &gt;&gt; ~/.zshrc</code> then <code>source ~/.zshrc</code></div>
+      <ol class="checks">
+        <li>Ran the install command</li>
+        <li>Ran <code>claude</code> and logged in via browser</li>
+        <li>Saw the Claude Code prompt in Terminal</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <h2><span class="num">2</span> Connect Claude Code to VS Code <span class="pill">Editor</span></h2>
+    <p class="sub">So Claude's edits show up as live diffs right inside your editor.</p>
+    <div class="body">
+      <ol class="checks">
+        <li>Open VS Code → Extensions panel (<code>Cmd+Shift+X</code>)</li>
+        <li>Search <b>"Claude Code"</b> (by Anthropic) → <b>Install</b></li>
+        <li>Open your project folder in VS Code (File → Open Folder)</li>
+        <li>Open the integrated terminal (<code>Ctrl+`</code>) and type <code>claude</code></li>
+      </ol>
+      <div class="scene">🖼️ <b>What you'll see:</b> a Claude panel docked in VS Code. When Claude edits a file, you get a side-by-side <b>diff</b> — green for added lines, red for removed — that you accept or reject.</div>
+      <div class="tip">💡 Useful moves: <code>@</code> a filename to point Claude at it · hover a past message to <b>rewind</b> code to an earlier checkpoint · run <code>claude --resume</code> to pick up a previous conversation.</div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step git">
+    <h2><span class="num">3</span> Wire up GitHub <span class="pill">Version control</span></h2>
+    <p class="sub">Where your code lives, and where pull requests happen.</p>
+    <div class="body">
+      <p><b>3a — Install &amp; log in to the GitHub CLI:</b></p>
+      <pre><code>brew install gh
+gh auth login</code></pre>
+      <div class="scene">🖼️ Choose <b>GitHub.com → HTTPS → Login with a web browser</b>. Copy the one-time code shown, paste it in the browser, authorize. Done.</div>
+      <p><b>3b — Let Claude act on your repo (the agentic part):</b> inside a <code>claude</code> session, run:</p>
+      <pre><code>/install-github-app</code></pre>
+      <div class="scene">🖼️ This walks you through installing the <b>Claude GitHub app</b> on your repository and setting up the secret it needs. After this, you can comment <code>@claude fix the failing test</code> on any issue or PR and Claude will open a session and push a fix.</div>
+      <div class="warn">⚠️ You must be an <b>admin</b> of the repo to install the app. If <code>/install-github-app</code> stalls, install manually at <a href="https://github.com/apps/claude">github.com/apps/claude</a>.</div>
+      <ol class="checks">
+        <li><code>gh auth login</code> succeeded</li>
+        <li>Ran <code>/install-github-app</code> and selected your repo</li>
+        <li>Tested <code>@claude</code> on a test issue</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step slack">
+    <h2><span class="num">4</span> Bring in Slack <span class="pill">Notify + trigger</span></h2>
+    <p class="sub">Two separate apps do two different jobs — install both.</p>
+    <div class="body">
+      <p><b>4a — Claude in Slack</b> (kick off coding tasks by chatting):</p>
+      <ol class="checks">
+        <li>Go to the <a href="https://slack.com/marketplace/A08SF47R6P4-claude">Claude on Slack</a> marketplace page → <b>Add to Slack</b></li>
+        <li>Authorize it for your workspace</li>
+        <li>In a channel, type <code>/invite @Claude</code></li>
+        <li>Try it: <code>@Claude add a README to my repo</code></li>
+      </ol>
+      <div class="scene">🖼️ Claude replies in-thread with status updates, then shows <b>View Session</b> and <b>Create PR</b> buttons when done.</div>
+      <p style="margin-top:16px"><b>4b — GitHub for Slack</b> (get notified of PRs &amp; CI):</p>
+      <ol class="checks">
+        <li>Install the official <b>GitHub</b> app from the Slack marketplace</li>
+        <li>In your chosen channel run: <code>/github subscribe your-username/your-repo</code></li>
+      </ol>
+      <div class="tip">💡 Think of it as: <b>Claude app = do the work</b>, <b>GitHub app = tell me what happened</b>.</div>
+      <div class="warn">⚠️ Claude-in-Slack needs Claude Code on the web enabled. On a Team/Enterprise workspace an admin must turn it on under <b>Settings → Claude Code</b>. On a personal workspace your individual plan governs access.</div>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step daily">
+    <h2><span class="num">5</span> Run the loop daily <span class="pill">Workflow</span></h2>
+    <p class="sub">Your repeatable rhythm once everything's connected.</p>
+    <div class="body">
+      <ol class="checks">
+        <li><b>Start a branch:</b> tell Claude "start a new branch for the login feature"</li>
+        <li><b>Build:</b> describe what you want; review the diffs; accept</li>
+        <li><b>Commit:</b> "commit this with a clear message" — Claude writes it and runs <code>git commit</code></li>
+        <li><b>Open a PR:</b> "push and open a pull request" — Claude uses <code>gh</code> to do it</li>
+        <li><b>Notify:</b> GitHub app posts the PR to Slack automatically</li>
+        <li><b>Iterate from anywhere:</b> comment <code>@claude address the review comments</code> on the PR, or message <code>@Claude</code> in Slack</li>
+      </ol>
+      <div class="tip">🎓 <b>Returning-dev tip:</b> you rarely type git commands yourself anymore. Describe the intent ("undo my last commit but keep the changes") and let Claude translate it — but read what it proposes before accepting.</div>
+    </div>
+  </div>
+
+  <h3 class="section">Cheat Sheet</h3>
+  <pre><code># install Claude Code
+curl -fsSL https://claude.ai/install.sh | bash
+claude                      # start + log in
+
+# github
+brew install gh
+gh auth login
+/install-github-app        # run inside claude
+
+# everyday
+claude --resume            # continue last conversation
+git status                 # see what changed (Claude can do this for you)</code></pre>
+
+  <footer>
+    Made for DRG · Follow the steps in order · Check off each box as you go ✦
+  </footer>
+
+</div>
+</body>
+</html>
