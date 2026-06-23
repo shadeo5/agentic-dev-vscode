@@ -15,3 +15,5 @@ A side project for learning the end-to-end agentic workflow:
 
 This README was created and pushed by Claude Code to confirm the
 full edit → commit → push loop works from the terminal.
+
+Setup complete
