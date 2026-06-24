@@ -50,6 +50,8 @@ spec and milestones. This is also a learning repo for agentic development, so
 4. After a change, show the **diff summary** and the commands you ran.
 5. Use a **feature branch** per slice; never commit directly to `main`.
 6. Conventional commit messages: `feat:`, `fix:`, `test:`, `chore:`, `docs:`.
+7. Keep **`WORKLOG.md`** current — updating it is part of the Definition of
+   Done, not an afterthought.
 
 ## Guardrails (inventory correctness is the whole point)
 - Stock must never go negative. Decrement only on the FULFILLED transition.
@@ -58,4 +60,7 @@ spec and milestones. This is also a learning repo for agentic development, so
 
 ## Definition of done for a slice
 Typecheck passes, lint passes, tests pass, diff reviewed, PR opened with a
-description of what changed and how it was verified.
+description of what changed and how it was verified, and `WORKLOG.md` updated —
+a new top entry for the session (or the current entry extended) covering Done /
+Decisions (and why) / Follow-ups / Verification, on a small `docs/` branch + PR
+per the usual flow.
