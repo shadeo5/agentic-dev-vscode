@@ -50,3 +50,18 @@ export function getProductById(db: Db, id: number): Product | undefined {
     | undefined;
   return row ? toProduct(row) : undefined;
 }
+
+// Fetch several products by id at once, keyed for O(1) lookup. Absence from the
+// returned map means the id doesn't exist — order placement uses this for its
+// existence check (404) and for the price snapshot.
+export function getProductsByIds(
+  db: Db,
+  ids: number[],
+): Map<number, Product> {
+  if (ids.length === 0) return new Map();
+  const placeholders = ids.map(() => "?").join(", ");
+  const rows = db
+    .prepare(`${SELECT_PRODUCTS} WHERE p.id IN (${placeholders})`)
+    .all(...ids) as ProductRow[];
+  return new Map(rows.map((row) => [row.id, toProduct(row)]));
+}

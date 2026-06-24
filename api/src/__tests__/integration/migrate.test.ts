@@ -65,4 +65,45 @@ describe("db migration", () => {
 
     db.close();
   });
+
+  // AC-4.10 — the oversell backstop: the DB itself forbids reserved > on-hand.
+  it("rejects a reservation greater than on-hand stock (CHECK reserved <= on_hand)", () => {
+    const db = openDatabase();
+    migrate(db);
+    db.prepare(
+      "INSERT INTO products (sku, name, price_cents, category) VALUES (?, ?, ?, ?)",
+    ).run("SKU-1", "Widget", 1000, "tools");
+
+    expect(() =>
+      db
+        .prepare(
+          "INSERT INTO inventory_items (product_id, quantity_on_hand, quantity_reserved) VALUES (?, ?, ?)",
+        )
+        .run(1, 5, 6),
+    ).toThrow(/CHECK constraint failed/);
+
+    db.close();
+  });
+
+  // AC-4.8 — one line per product per order, enforced by the database.
+  it("rejects a duplicate (order_id, product_id) line item (UNIQUE)", () => {
+    const db = openDatabase();
+    migrate(db);
+    db.prepare(
+      "INSERT INTO products (sku, name, price_cents, category) VALUES (?, ?, ?, ?)",
+    ).run("SKU-1", "Widget", 1000, "tools");
+    db.prepare(
+      "INSERT INTO orders (customer_name, created_at) VALUES (?, ?)",
+    ).run("Ada", "2026-06-24T00:00:00.000Z");
+    const insertLine = db.prepare(
+      "INSERT INTO order_line_items (order_id, product_id, quantity, unit_price_cents) VALUES (?, ?, ?, ?)",
+    );
+    insertLine.run(1, 1, 2, 1000);
+
+    expect(() => insertLine.run(1, 1, 5, 1000)).toThrow(
+      /UNIQUE constraint failed/,
+    );
+
+    db.close();
+  });
 });

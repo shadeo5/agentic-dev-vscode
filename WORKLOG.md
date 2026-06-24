@@ -11,6 +11,53 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
+## 2026-06-24 — Slice 4: Order placement (M2b)
+
+**Scope:** `POST /orders` with true stock reservation. First slice driven
+**spec-first**: wrote `ACCEPTANCE.md` (AC-4.1–4.19) before the code, then traced
+every test back to a criterion.
+
+### Done
+- **Reservation model** (new): `inventory_items.quantity_reserved` + DB
+  `CHECK (reserved <= on_hand)` (oversell backstop). Available = on_hand −
+  reserved. Placement reserves; on-hand untouched until FULFILLED.
+- **One line per product per order**: `UNIQUE (order_id, product_id)` +
+  `consolidateLines` (pure) merging duplicate entries at placement.
+- `orderService.placeOrder` — one `db.transaction`: consolidate → 404 if product
+  missing → `checkOrderStock` vs available (409 + shortfalls) → insert order +
+  line items (price snapshot) → reserve.
+- New `http/errors.ts` (typed `AppError`/`NotFoundError`/`InsufficientStockError`
+  → status), `orderRepository`, `inventoryRepository`, `orderRoutes` (Zod body).
+- `domain/orders.ts` + `domain/types.ts` (`Order`, `OrderStatus`).
+
+### Decisions (and why)
+- **Reserve, don't decrement, at placement** — closes the oversell gap the raw
+  "check on-hand" model had (caught in review): two PLACED orders could each pass
+  the same stock. The `reserved <= on_hand` CHECK makes it impossible.
+- **Consolidate before the stock check** — ordering 3+3 of a 5-stock item is one
+  request for 6 → 409, not a partial success (AC-4.19).
+- **`http/errors.ts` introduced here** (deferred from Slice 2) — multiple error
+  types finally justify the typed error→status layer.
+- **Spec-first via ACCEPTANCE.md** — piloted the acceptance-criteria practice;
+  edge cases now come from an explicit checklist, not just in-the-moment judgment.
+
+### Follow-ups
+- [ ] Backfill ACCEPTANCE.md for Slices 0–3 if the practice proves its worth.
+- [ ] Slice 6 fulfillment must RELEASE reservations on cancel and CONVERT them
+      (decrement on_hand AND reserved, single UPDATE) on FULFILLED.
+
+### Verification
+- `npm test` → 41 passed (6 files; +13 placement/consolidation/migrate cases).
+- `npm run typecheck` + `npm run lint` clean. All 19 ACs traced to tests.
+
+### Next up
+- **Slice 5 — Order state machine (M3a):** pure `orderStateMachine.ts` + unit tests.
+
+### PRs / branches
+- `#11` feat/slice-4-order-placement (this slice).
+
+---
+
 ## 2026-06-24 — Slice 3: Inventory check domain logic (M2a)
 
 **Scope:** First pure-domain module + co-located unit tests. Zero I/O — front-

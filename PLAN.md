@@ -69,7 +69,11 @@ second line of defense for the "no negative stock" guarantee.
 - **products**: id PK, sku TEXT UNIQUE, name, description, `price_cents` INTEGER
   (money as integer cents, never float), category.
 - **inventory_items** (1–1 with product): product_id PK/FK, `quantity_on_hand`
-  INTEGER with `CHECK (quantity_on_hand >= 0)`, reorder_threshold.
+  INTEGER with `CHECK (quantity_on_hand >= 0)`, `quantity_reserved` INTEGER with
+  `CHECK (quantity_reserved >= 0)` and table-level `CHECK (quantity_reserved <=
+  quantity_on_hand)`, reorder_threshold. **Sellable stock = available =
+  on_hand − reserved.** The `reserved <= on_hand` check is the DB-level oversell
+  backstop.
 - **orders**: id PK, status with `CHECK (status IN (...))`, customer_name,
   created_at (ISO-8601).
 - **order_line_items** (many per order): id PK, order_id FK, product_id FK,
@@ -120,9 +124,12 @@ A const map is the whole implementation; the service asks this module and never
 hardcodes a check.
 
 **inventory.ts** — pure stock math: `hasSufficientStock`, `checkOrderStock`
-(returns shortfalls), `applyDecrement` (never returns < 0). The service composes
-these inside a `db.transaction`. Invariant: decrement happens **only** on
-`→ FULFILLED`; placement reserves but does not touch `quantity_on_hand`.
+(returns shortfalls, fed `available = on_hand − reserved`), `applyDecrement`
+(throws rather than going < 0). The service composes these inside a
+`db.transaction`. Reservation lifecycle: **placement** raises `quantity_reserved`
+(on_hand untouched); **cancellation** lowers it; **FULFILLED** lowers BOTH
+`quantity_on_hand` and `quantity_reserved` (the goods physically leave).
+Invariant: `quantity_on_hand` is decremented **only** on `→ FULFILLED`.
 
 ## 5. Test strategy (Vitest)
 
@@ -162,7 +169,20 @@ Front-loads the pure-logic slices (3, 5) right before the slices that consume th
 ## 7. Decisions (resolved with DRG)
 
 **Resolved:** raw SQL (no ORM) · Zod validation · single `/transition` endpoint ·
-separate npm packages (no workspaces yet) · co-located unit tests. Details below.
+separate npm packages (no workspaces yet) · co-located unit tests · **reservation
+model** · **one line per product per order**. Details below.
+
+**Reservation model (Slice 4):** placement *reserves* via a `quantity_reserved`
+column rather than decrementing on-hand. Availability = `on_hand − reserved`, and
+the DB `CHECK (reserved <= on_hand)` makes oversell impossible. Chosen over
+(a) decrement-at-placement (breaks "decrement only on FULFILLED") and (b) accept
++ re-check (allows a "yes" at placement, "no" at fulfillment). Cancellation
+releases the reservation; FULFILLED converts it to a real decrement.
+
+**One line per product per order (Slice 4):** `UNIQUE (order_id, product_id)` plus
+`consolidateLines` (pure) merging duplicate-product entries at placement. An
+"edit a placed order" capability is out of M1–3 scope, but the constraint makes it
+a trivial UPSERT when added.
 
 
 1. **Raw SQL vs ORM** — *recommend raw SQL via better-sqlite3 prepared statements*

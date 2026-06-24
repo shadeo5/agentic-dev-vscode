@@ -21,11 +21,20 @@ CREATE TABLE IF NOT EXISTS products (
 
 -- 1-to-1 with products: product_id is both PK and FK. ON DELETE CASCADE so a
 -- product and its stock row are removed together.
+--
+-- Stock has two parts: quantity_on_hand (physically present) and
+-- quantity_reserved (spoken for by PLACED/PICKING/PACKED orders, not yet
+-- shipped). Sellable stock is available = on_hand - reserved. Placement raises
+-- reserved; cancellation lowers it; FULFILLED lowers BOTH (the goods leave).
+-- The CHECK (reserved <= on_hand) is the database-level oversell backstop:
+-- no sequence of orders can reserve more than physically exists.
 CREATE TABLE IF NOT EXISTS inventory_items (
   product_id        INTEGER PRIMARY KEY
                       REFERENCES products(id) ON DELETE CASCADE,
   quantity_on_hand  INTEGER NOT NULL DEFAULT 0 CHECK (quantity_on_hand >= 0),
-  reorder_threshold INTEGER NOT NULL DEFAULT 0 CHECK (reorder_threshold >= 0)
+  quantity_reserved INTEGER NOT NULL DEFAULT 0 CHECK (quantity_reserved >= 0),
+  reorder_threshold INTEGER NOT NULL DEFAULT 0 CHECK (reorder_threshold >= 0),
+  CHECK (quantity_reserved <= quantity_on_hand)
 );
 
 -- status is constrained to the order state machine's vocabulary (SPEC/PLAN).
@@ -48,5 +57,8 @@ CREATE TABLE IF NOT EXISTS order_line_items (
   order_id         INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   product_id       INTEGER NOT NULL REFERENCES products(id),
   quantity         INTEGER NOT NULL CHECK (quantity > 0),
-  unit_price_cents INTEGER NOT NULL CHECK (unit_price_cents >= 0)
+  unit_price_cents INTEGER NOT NULL CHECK (unit_price_cents >= 0),
+  -- One line per product per order: re-ordering the same product consolidates
+  -- into the existing line rather than creating a duplicate.
+  UNIQUE (order_id, product_id)
 );
