@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import type { Db } from "./db/connection";
 import { catalogRoutes } from "./routes/catalogRoutes";
+import { orderRoutes } from "./routes/orderRoutes";
 
 // Builds the Express app WITHOUT starting a server (no .listen here).
 // Keeping construction separate from binding a port is what lets tests
@@ -17,6 +18,9 @@ export function createApp(db: Db): Express {
 
   // Catalog read (M1): GET /products, GET /products/:id.
   app.use(catalogRoutes(db));
+
+  // Order placement (M2): POST /orders.
+  app.use(orderRoutes(db));
 
   return app;
 }
