@@ -1,0 +1,47 @@
+name: CI
+
+# Gate the Definition of Done (CLAUDE.md): typecheck, lint, and tests must
+# pass on every PR into main and on pushes to main itself. This turns the
+# "checks pass in CI" line in our PR template from a claim into an enforced
+# requirement (pair with a required-status-check branch rule to block merges).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# A newer push to the same branch/PR makes older runs obsolete — cancel them
+# so we don't waste runners on superseded commits.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: api — typecheck, lint, test
+    runs-on: ubuntu-latest
+    # Every step runs inside api/, since it's a standalone npm package (no
+    # workspaces yet). When web/ becomes real, add a sibling job rather than
+    # overloading this one.
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 24 (Active LTS) per CLAUDE.md. Cache npm downloads keyed on the
+      # api lockfile so installs stay fast.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      # npm ci = clean, lockfile-exact install (fails if package.json and the
+      # lock disagree). Note: better-sqlite3 is a native module and compiles
+      # from prebuilt binaries/source here; ubuntu-latest has the toolchain.
+      - run: npm ci
+
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
