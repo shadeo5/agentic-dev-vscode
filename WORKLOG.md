@@ -11,6 +11,44 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
+## 2026-06-24 — Slice 3: Inventory check domain logic (M2a)
+
+**Scope:** First pure-domain module + co-located unit tests. Zero I/O — front-
+loaded right before Slice 4 (order placement) consumes it.
+
+### Done
+- `domain/inventory.ts` (pure): `hasSufficientStock`, `checkOrderStock`
+  (returns `Shortfall[]` with `shortBy`; product missing from stock levels = 0
+  available), `applyDecrement` (throws rather than going negative).
+- `inventory.test.ts` co-located next to the module — first use of the
+  co-located unit-test pattern (CLAUDE.md decision). 13 cases.
+
+### Decisions (and why)
+- **`applyDecrement` throws on would-go-negative / negative qty**, rather than
+  clamping to 0 — a silent clamp would hide an over-decrement bug; throwing
+  surfaces a skipped stock check. Still satisfies PLAN's "never returns < 0".
+- **Missing product in `stockLevels` → 0 available** — yields a precise
+  shortfall instead of a crash on unknown ids.
+- **`Map<productId, onHand>`** as the stock input — O(1) lookups; decouples the
+  pure math from how the service loads stock.
+
+### Follow-ups
+- [ ] Slice 4 composes these inside a `db.transaction` (placement reserves but
+      does NOT decrement; decrement happens only on FULFILLED in Slice 6).
+
+### Verification
+- `npm test` → 22 passed (4 files; +13 inventory cases, red→green).
+- `npm run typecheck` + `npm run lint` clean.
+
+### Next up
+- **Slice 4 — Order placement (M2b):** `orderService.placeOrder` (transactional,
+  snapshot prices, check stock, NO decrement), `POST /orders`; 201 / 409 / 404 / 400.
+
+### PRs / branches
+- `#10` feat/slice-3-inventory (this slice).
+
+---
+
 ## 2026-06-24 — Slice 2: Catalog read (M1)
 
 **Scope:** Read-only catalog endpoints over the Slice 1 schema. Test-first per
