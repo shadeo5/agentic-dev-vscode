@@ -26,7 +26,7 @@ to `main`.
 - **Slice 0.5 — CI** (`PR #4`, merged): `.github/workflows/ci.yml` — Node 24,
   `npm ci → typecheck → lint → test` scoped to `api/`, on every PR into `main`
   and push to `main`. CI green on its own PR (16s).
-- **Slice 1 — DB schema + migrate + connection** (`PR #3`, open): four tables
+- **Slice 1 — DB schema + migrate + connection** (`PR #3`, merged): four tables
   (`products`, `inventory_items`, `orders`, `order_line_items`) with money as
   integer `*_cents` and constraints as load-bearing correctness; `connection.ts`
   (`openDatabase`, `PRAGMA foreign_keys = ON`); `migrate.ts` (applies
@@ -34,6 +34,13 @@ to `main`.
   the four tables exist, prove the negative-stock CHECK and FK actually reject
   bad inserts. CI green on the runner incl. native `better-sqlite3` build (18s).
 - **Branch hygiene:** dropped the stray `test-loop` branch (local + remote).
+- **Session log** (`PR #5`, merged): added `WORKLOG.md` (this file).
+- **Standing rule** (`PR #6`, merged): made keeping `WORKLOG.md` current part of
+  the Definition of Done + working agreement in CLAUDE.md, so it happens every
+  slice without being asked (reinforced by a saved memory).
+- **Merged & protected `main`:** merged `PR #3/#5/#6`, then enabled branch
+  protection — `api — typecheck, lint, test` is now a **required, strict** status
+  check; force-push and deletion of `main` disabled. Slice 2+ cannot merge red.
 
 ### Decisions (and why)
 - **Unstack rather than stack PRs.** Merged Slice 0 (#2) to `main` first, then
@@ -52,13 +59,18 @@ to `main`.
 - **Dropped `test-loop`** — its only unique commit was a throwaway README line.
 
 ### Follow-ups
-- [ ] Merge `PR #3` (Slice 1) — complete and CI-green.
-- [ ] **Branch protection** on `main`: make `api — typecheck, lint, test` a
-      required status check to turn CI from advisory into blocking.
+- [x] Merge `PR #3` (Slice 1) — done.
+- [x] **Branch protection** on `main` — done (strict; required check
+      `api — typecheck, lint, test`).
 - [ ] Bump `actions/checkout` and `actions/setup-node` `@v4 → @v5` to clear the
       "Node 20 deprecated" CI warning (tiny chore).
-- [ ] Add `api/storeflow.db` ignore is done; revisit seed data in Slice 2.
+- [ ] Seed data: revisit in Slice 2 (catalog read) — keep it dev-only, never
+      assumed in tests.
+
+### Next up
+- **Slice 2 — Catalog read (M1):** `productRepository`, `GET /products` +
+  `GET /products/:id`, dev seed; integration tests incl. 404.
 
 ### PRs / branches
-- `#2` slice-0-skeleton (merged) · `#4` chore/slice-0.5-ci (merged) ·
-  `#3` feat/slice-1-db-schema (open).
+- `#2` slice-0-skeleton · `#4` chore/slice-0.5-ci · `#3` feat/slice-1-db-schema ·
+  `#5` docs/worklog · `#6` docs/worklog-rule — all merged.
