@@ -27,11 +27,11 @@ jobs:
       run:
         working-directory: api
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Node 24 (Active LTS) per CLAUDE.md. Cache npm downloads keyed on the
       # api lockfile so installs stay fast.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
