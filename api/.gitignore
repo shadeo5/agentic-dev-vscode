@@ -1,0 +1,6 @@
+# SQLite database files — dev/runtime artifacts, never versioned.
+storeflow.db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
