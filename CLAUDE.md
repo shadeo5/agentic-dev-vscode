@@ -61,6 +61,6 @@ spec and milestones. This is also a learning repo for agentic development, so
 ## Definition of done for a slice
 Typecheck passes, lint passes, tests pass, diff reviewed, PR opened with a
 description of what changed and how it was verified, and `WORKLOG.md` updated —
-a new top entry for the session (or the current entry extended) covering Done /
-Decisions (and why) / Follow-ups / Verification, on a small `docs/` branch + PR
-per the usual flow.
+a new top entry (or the current one extended) covering Done / Decisions (and
+why) / Follow-ups / Verification. The WORKLOG update rides in the **same PR as
+the slice** (its own `docs:` commit), so each slice stays one PR.
