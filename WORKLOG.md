@@ -11,6 +11,53 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
+## 2026-06-24 — Slice 2: Catalog read (M1)
+
+**Scope:** Read-only catalog endpoints over the Slice 1 schema. Test-first per
+PLAN §5: failing integration test → repository → route + `app.ts` wiring.
+
+### Done
+- `GET /products` (list with current stock) and `GET /products/:id`
+  (200 / 404 / 400).
+- `productRepository` — the only DB-touching module for catalog reads; LEFT JOIN
+  `products` ⨝ `inventory_items`; maps `snake_case` rows → camelCase `Product`.
+- `catalogRoutes` — thin HTTP; Zod validates `:id` (Zod introduced here).
+- `createApp(db)` now takes an injected connection; `index.ts` opens + migrates
+  `storeflow.db` on startup.
+- `domain/types.ts` — pure `Product` type.
+- `db/seed.ts` + `npm run seed` — dev-only, idempotent (`INSERT OR IGNORE`);
+  never used by tests.
+
+### Decisions (and why)
+- **camelCase API** (`priceCents`, `quantityOnHand`), mapped in the repository —
+  storage naming stops at the boundary; matches SPEC's domain vocabulary.
+- **Malformed `:id` → 400, unknown → 404** — boundary validation separates a bad
+  request from a missing resource.
+- **LEFT JOIN** — a product with no inventory row reports 0 stock, not dropped.
+- **No service layer yet** — pure read; routes call the repository directly
+  (services arrive with orders, Slice 4).
+- **`createApp(db)` injection** over a module-global singleton — lets tests pass a
+  fresh `:memory:` db.
+- **`http/errors.ts` deferred** to Slice 4, where there are multiple error types.
+- **WORKLOG rule clarified** — entries now ride in the slice's own PR (one PR per
+  slice), replacing the earlier "separate `docs/` PR" wording in CLAUDE.md.
+
+### Follow-ups
+- [ ] Bump `actions/checkout` + `actions/setup-node` `@v4 → @v5` (carried over).
+- [ ] `http/errors.ts` typed error→status mapping arrives with Slice 4.
+
+### Verification
+- `npm test` → 9 passed (3 files; +5 catalog cases, red→green).
+- `npm run typecheck` + `npm run lint` clean. `npm run seed` idempotent (4 rows).
+
+### Next up
+- **Slice 3 — Inventory check domain logic (M2a):** pure `inventory.ts` + unit tests.
+
+### PRs / branches
+- `#8` feat/slice-2-catalog (this slice).
+
+---
+
 ## 2026-06-24 — Slices 0–1 + CI foundation
 
 **Scope:** Commit the project scaffold, ship the first two vertical slices, and
