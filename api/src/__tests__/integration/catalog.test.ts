@@ -20,6 +20,7 @@ interface Fixture {
   priceCents: number;
   category: string;
   quantityOnHand: number;
+  quantityReserved?: number;
 }
 
 function insertProduct(db: Db, p: Fixture): number {
@@ -30,8 +31,8 @@ function insertProduct(db: Db, p: Fixture): number {
     .run(p.sku, p.name, p.description ?? "", p.priceCents, p.category);
   const id = Number(info.lastInsertRowid);
   db.prepare(
-    "INSERT INTO inventory_items (product_id, quantity_on_hand) VALUES (?, ?)",
-  ).run(id, p.quantityOnHand);
+    "INSERT INTO inventory_items (product_id, quantity_on_hand, quantity_reserved) VALUES (?, ?, ?)",
+  ).run(id, p.quantityOnHand, p.quantityReserved ?? 0);
   return id;
 }
 
@@ -52,6 +53,8 @@ describe("GET /products", () => {
         priceCents: 1000,
         category: "tools",
         quantityOnHand: 5,
+        quantityReserved: 0,
+        available: 5,
       }),
     );
     db.close();
@@ -89,6 +92,30 @@ describe("GET /products/:id", () => {
       priceCents: 1000,
       category: "tools",
       quantityOnHand: 5,
+      quantityReserved: 0,
+      available: 5,
+    });
+    db.close();
+  });
+
+  it("reports available as on-hand minus reserved", async () => {
+    const db = freshDb();
+    const id = insertProduct(db, {
+      sku: "SKU-1",
+      name: "Widget",
+      priceCents: 1000,
+      category: "tools",
+      quantityOnHand: 5,
+      quantityReserved: 3,
+    });
+
+    const res = await request(createApp(db)).get(`/products/${id}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      quantityOnHand: 5,
+      quantityReserved: 3,
+      available: 2,
     });
     db.close();
   });
