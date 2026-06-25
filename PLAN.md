@@ -1,4 +1,4 @@
-# StoreFlow — Implementation Plan (Milestones 1–3)
+# StoreFlow — Implementation Plan (Milestones 1–4)
 
 > Produced by a planning pass and reviewed before any code is written. Covers the
 > backend foundation and first three vertical slices. Front-end dashboard (M4) and
@@ -196,3 +196,52 @@ a trivial UPSERT when added.
    workspaces is the low-cost upgrade when we want to share domain types with the M4 front end.
 5. **Test file location** — *recommend co-locate unit tests with source; integration
    tests in `__tests__/integration/`.*
+
+## 8. M4 — Associate dashboard (front end)
+
+> Planned after M1–M3 (the backend core) shipped. The dashboard is a React +
+> Vite + TypeScript app in `web/` that consumes the existing HTTP API: a
+> fulfillment queue, order actions, and a live stock view (SPEC M4).
+
+### Stack & cross-cutting decisions (resolved with DRG)
+- **React + Vite + TypeScript** (strict) in `web/`; a separate npm package (no
+  workspaces yet — `web/` **duplicates** the API response types `Product`/`Order`;
+  npm workspaces is the future upgrade to share them).
+- **Data fetching: vanilla `fetch` + React hooks** — a small typed client plus
+  `useState`/`useEffect` and a refetch helper after mutations. No data library
+  (transparent; clarity over cleverness).
+- **Dev API access: Vite dev proxy** — `/api` → `http://localhost:3000`, so the
+  browser is same-origin: no CORS and no API change needed in dev. (A production
+  deploy revisits this.)
+- **Styling: Tailwind CSS.**
+- **Tests: Vitest + React Testing Library** (component tests, mocked client) per
+  slice; **Playwright e2e** in M4.4 (later, per SPEC).
+- **CI: a sibling `web` job** in `.github/workflows/ci.yml` (typecheck + lint +
+  test + build), required on `main` like the api job.
+
+### Prep A (api) — expose available stock
+Before the stock view, add `quantity_reserved` and derived `available =
+on_hand − reserved` to `GET /products` and `/products/:id` (test-first). A "live
+stock view" should show what's actually sellable, not just on-hand.
+
+### Vertical slices (smallest shippable PRs, dependency order)
+- **M4.0 — Front-end skeleton** *(the teaching slice):* scaffold `web/` (Vite,
+  React, TS strict, Tailwind, eslint, Vitest + RTL), the Vite dev proxy, a minimal
+  App that fetches the API and renders proof-of-life + one component test; add the
+  `web` CI job. Done when install/typecheck/lint/test/build pass and CI is green.
+- **M4.1 — Live stock view** *(read-only):* a typed API client + `Product` types;
+  a catalog view listing products with on-hand / reserved / available. Component
+  tests with a mocked client.
+- **M4.2 — Fulfillment queue** *(read-only):* the orders list from `GET /orders`
+  with a status filter; rows show customer, status, and line items (product names
+  joined client-side from the catalog).
+- **M4.3 — Advance & cancel orders** *(mutations — the interactive core):*
+  per-order actions calling `POST /orders/:id/transition`, offering only legal next
+  states, handling 409 / errors, refetching after.
+- **M4.4 — e2e + polish** *(stretch):* Playwright e2e (seed → place → advance →
+  fulfill, watching stock change) + loading / error / empty states.
+
+Sequencing: **Prep A → M4.0 → M4.1 → M4.2 → M4.3 → (M4.4 later).** Same working
+agreement as the backend: one slice ≈ one PR, test-first, WORKLOG updated.
+Behavior-rich slices (M4.3) get acceptance criteria; the skeleton and read-only
+views don't (value over box-checking).
