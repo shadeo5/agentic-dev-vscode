@@ -11,6 +11,50 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
+## 2026-06-24 — Slice 6: Fulfillment transitions (M3b)
+
+**Scope:** `POST /orders/:id/transition`, `GET /orders` (`?status=`),
+`GET /orders/:id`. Closes the reservation lifecycle. **Spec-first** (behavior-
+rich): ACCEPTANCE.md AC-6.1–6.16 written before code. Completes the M1–M3 backend.
+
+### Done
+- `fulfillmentService.transition` — one `db.transaction`: load → `canTransition`
+  guard (409) → inventory effect → `updateStatus`.
+  - **→ FULFILLED**: `inventoryRepository.fulfill` decrements on-hand AND releases
+    the reservation in a single UPDATE. Decrement-exactly-once (FULFILLED terminal).
+  - **→ CANCELLED**: `release` frees the reservation; on-hand untouched.
+- `orderRepository.listOrders(status?)` + `updateStatus`; shared `toOrder` mapper.
+- `IllegalTransitionError` (409) in `http/errors.ts`.
+- `orderRoutes`: three new routes; Zod validates `{ to }` (enum) and `?status=`.
+- **DESIGN.md brought current** — state-machine + data-model diagrams updated
+  (PACKED→CANCELLED, `quantity_reserved`, oversell CHECK, UNIQUE), plus stale
+  file table / API surface / "planned" status / test count (22→82).
+
+### Decisions (and why)
+- **Single funnel through the state machine** — the route never hardcodes a
+  transition; it asks `canTransition`. Illegal/terminal → 409.
+- **Fulfill = one UPDATE** (`on_hand -= n, reserved -= n`) so the
+  `reserved <= on_hand` CHECK never sees a half-updated row.
+- **`GET /orders` includes line items**, invalid `?status=` → 400 (boundary
+  validation), consistent with the rest of the API.
+
+### Follow-ups
+- Parked Slice 4 review notes still open (inventory-row invariant AC, TOCTOU doc
+  note, response-shape AC, unreachable-404 comment).
+- [ ] M4 front end can now consume the full order lifecycle.
+
+### Verification
+- `npm test` → 82 passed (8 files; +13 fulfillment cases, red→green). typecheck +
+  lint clean. All 16 ACs (AC-6.x) traced to tests.
+
+### Next up
+- **M4 — Associate dashboard (front end):** fulfillment queue UI in `web/`.
+
+### PRs / branches
+- `#13` feat/slice-6-fulfillment (this slice).
+
+---
+
 ## 2026-06-24 — Slice 5: Order state machine (M3a)
 
 **Scope:** Pure `orderStateMachine.ts` — the single source of truth for legal
