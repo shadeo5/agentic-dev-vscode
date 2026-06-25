@@ -11,6 +11,53 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
+## 2026-06-24 — Slice 5: Order state machine (M3a)
+
+**Scope:** Pure `orderStateMachine.ts` — the single source of truth for legal
+order transitions, front-loaded before Slice 6 (fulfillment) consumes it.
+
+### Done
+- `domain/orderStateMachine.ts` (pure): `canTransition`, `legalNextStates`,
+  `isTerminal`, backed by one `TRANSITIONS` const map.
+- Exhaustive co-located test: all **25** (from, to) pairs checked against an
+  independently-written truth table + terminal/next-state assertions (27 cases).
+- Updated PLAN §4 + SPEC for the rule change below.
+
+### Decisions (and why)
+- **PACKED is now cancellable** (`PACKED → CANCELLED`), changing the documented
+  machine (SPEC/PLAN previously allowed cancel only from PLACED/PICKING). Cleaner
+  rule: any non-terminal order may be cancelled until it ships. Slice 6 must
+  release the reservation on cancel from PACKED too.
+- **No ACCEPTANCE.md for this slice** — deliberately. The logic is a small, total
+  truth table; an exhaustive 25-pair test *is* the spec, so a prose criteria doc
+  would be duplication, not coverage. Acceptance criteria are reserved for
+  behavior-rich slices (Slice 6 will have them). Value over box-checking.
+- **Pure predicates, no throwing** — the 409 "illegal transition" mapping belongs
+  to Slice 6's endpoint, which calls `canTransition`.
+
+### Follow-ups
+- [ ] **Slice 6 fulfillment** consumes this: decrement on FULFILLED (release +
+      convert reservation), release reservation on CANCELLED (incl. from PACKED),
+      `POST /orders/:id/transition` → 409 on illegal transition.
+- Parked Slice 4 review notes (revisit, likely small ACCEPTANCE/doc additions):
+  - [ ] AC for "product with no inventory row → 0 available → 409" + invariant note.
+  - [ ] Doc note: the `reserved <= on_hand` CHECK is the concurrency/TOCTOU backstop.
+  - [ ] Explicit "response body = full Order" criterion (already covered by tests).
+  - [ ] Comment the intentional unreachable 404 in `orderService` (type-narrowing).
+
+### Verification
+- `npm test` → 68 passed (7 files; +27 state-machine cases). typecheck + lint clean.
+
+### Next up
+- **Slice 6 — Fulfillment transitions (M3b):** `POST /orders/:id/transition`,
+  `GET /orders`, `GET /orders/:id`; decrement-exactly-once on FULFILLED, release
+  on cancel, illegal → 409. (Acceptance criteria apply here.)
+
+### PRs / branches
+- `#12` feat/slice-5-state-machine (this slice).
+
+---
+
 ## 2026-06-24 — Slice 4: Order placement (M2b)
 
 **Scope:** `POST /orders` with true stock reservation. First slice driven
