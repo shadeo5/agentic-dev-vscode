@@ -11,6 +11,43 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
+## 2026-06-24 — M4.0: Front-end skeleton (web/)
+
+**Scope:** Scaffold the `web/` front end and prove the whole toolchain end-to-end
+— the teaching slice for the dashboard. First front-end code in the repo.
+
+### Done
+- Scaffolded `web/` via `create-vite` (React 19 + Vite 8 + TS). Added **strict**
+  to `tsconfig.app.json` (CLAUDE.md), removed template cruft.
+- **Tailwind v4** via `@tailwindcss/vite` (`@import "tailwindcss"` in `index.css`).
+- **Vite dev proxy**: `/api/*` → `http://localhost:3000` (no CORS in dev).
+- **Switched the linter to eslint** (template shipped oxlint) for one linter across
+  the repo, matching `api/`'s flat config + `react-hooks` rules.
+- **Vitest + React Testing Library** (jsdom); proof-of-life `App` with a
+  `useApiHealth` hook + 3 component tests (heading, ok, down) establishing the
+  fetch/test pattern later slices reuse.
+- **Web CI job** added to `ci.yml` (sibling to api): typecheck + lint + test +
+  **build** (a front end can typecheck-pass yet fail to build).
+
+### Decisions (and why)
+- **eslint over the template's oxlint** — one linter across packages; consistency
+  beats the template default.
+- **Vite dev proxy over CORS** — same-origin in dev, zero API change (PLAN §8).
+- **Build step in CI** — typecheck doesn't catch Vite/Tailwind build failures.
+
+### Verification
+- In `web/`: typecheck (`tsc -b`), lint, test (3 passed), build (Vite + Tailwind
+  CSS emitted) all green locally.
+
+### Next up
+- **M4.1 — Live stock view:** typed API client + catalog page (on-hand / reserved
+  / available from Prep A).
+
+### PRs / branches
+- `#16` feat/m4.0-skeleton (this slice).
+
+---
+
 ## 2026-06-24 — M4 Prep A: expose available stock (api)
 
 **Scope:** Small api change before the M4 front end — surface reservation on the
