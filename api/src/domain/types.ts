@@ -8,6 +8,9 @@ export interface Product {
   priceCents: number;
   category: string;
   quantityOnHand: number;
+  quantityReserved: number;
+  // Derived: what's actually sellable = quantityOnHand − quantityReserved.
+  available: number;
 }
 
 // The order state-machine vocabulary (see PLAN §4 / SPEC). The machine itself

@@ -11,6 +11,30 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
+## 2026-06-24 — M4 Prep A: expose available stock (api)
+
+**Scope:** Small api change before the M4 front end — surface reservation on the
+catalog so the "live stock view" can show what's actually sellable.
+
+### Done
+- `Product` now carries `quantityReserved` and derived `available = on_hand −
+  reserved`; `productRepository.toProduct` computes it at the boundary (the
+  `quantity_reserved` column already existed from Slice 4 — just not surfaced).
+- `GET /products` and `/products/:id` return the new fields.
+- Resolves the earlier flag that the catalog only showed on-hand.
+
+### Verification
+- `npm test` → 83 passed (8 files; +1 case: available = on-hand − reserved).
+  typecheck + lint clean. Test-first (catalog tests red → green).
+
+### Next up
+- **M4.0 — Front-end skeleton:** scaffold `web/` (Vite/React/TS/Tailwind) + web CI job.
+
+### PRs / branches
+- `#15` feat/prep-a-available (this change).
+
+---
+
 ## 2026-06-24 — Slice 6: Fulfillment transitions (M3b)
 
 **Scope:** `POST /orders/:id/transition`, `GET /orders` (`?status=`),
