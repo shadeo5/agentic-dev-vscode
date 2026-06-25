@@ -11,6 +11,38 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
+## ▶ Resume here — next session (as of 2026-06-24, end of day)
+
+**Where we are:** M1–M3 backend **complete** (Slices 0–6). M4 front end started:
+`web/` skeleton (M4.0) and Prep A (available stock) **merged**. `main` is branch-
+protected and gated on **both** CI checks (`api …` and `web …`). 0 open PRs,
+working tree clean.
+
+**Pick up here → M4.1 — Live stock view:** a typed API client in `web/` +
+duplicated `Product` type; a catalog page listing products with on-hand /
+reserved / available (Prep A fields), Tailwind-styled; RTL component tests with a
+mocked client. Read-only (no acceptance criteria). Test-first, new `feat/` branch
+off `main`, one PR. To run locally: API `cd api && npm run dev`; web
+`cd web && npm run dev` (Vite proxies `/api` → `:3000`).
+
+**Roadmap to "done" (finish the project):**
+- [ ] **M4.1** Live stock view  ← next
+- [ ] **M4.2** Fulfillment queue (`GET /orders` + `?status=` filter)
+- [ ] **M4.3** Advance & cancel orders (transition calls; *gets acceptance criteria*)
+- [ ] **M4.4** Playwright e2e + polish
+- [ ] **M5** Low-stock alerts (`quantity_on_hand ≤ reorder_threshold`; later Slack)
+- [ ] **M6** Observability (request logging + a metrics summary endpoint)
+
+**Parked / cleanup (don't lose these):**
+- [ ] 4 Slice 4 review notes: inventory-row invariant AC · TOCTOU doc note ·
+      response-shape AC · comment the unreachable 404 in `orderService`.
+- [ ] Root `README.md` is stale bootstrap content (describes the workflow setup,
+      not StoreFlow) — refresh it.
+- [ ] `web/README.md` is default Vite boilerplate.
+- [ ] Stray `agentic-workflow-setup-guide.html` at repo root — confirm if wanted.
+
+---
+
 ## 2026-06-24 — M4.0: Front-end skeleton (web/)
 
 **Scope:** Scaffold the `web/` front end and prove the whole toolchain end-to-end
