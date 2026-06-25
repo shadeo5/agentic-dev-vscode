@@ -112,12 +112,12 @@ places inventory can go wrong, they become the most heavily and cheaply tested c
 
 ```
 PLACED ──► PICKING ──► PACKED ──► FULFILLED   (terminal)
-  │           │
-  └──► CANCELLED ◄──┘                          (terminal)
+  │           │           │
+  └──────► CANCELLED ◄─────┘                   (terminal)
 ```
 - PLACED → PICKING | CANCELLED
 - PICKING → PACKED | CANCELLED
-- PACKED → FULFILLED
+- PACKED → FULFILLED | CANCELLED
 - FULFILLED / CANCELLED → terminal
 
 A const map is the whole implementation; the service asks this module and never

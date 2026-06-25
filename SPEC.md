@@ -21,7 +21,7 @@ answers — which makes it a good environment to practice *driving* an agent and
 - **Order**: id, status, createdAt, lineItems[], customerName.
 - **OrderLineItem**: productId, quantity, unitPrice.
 - **Order status machine**: `PLACED → PICKING → PACKED → FULFILLED`
-  (plus `CANCELLED` from PLACED/PICKING).
+  (plus `CANCELLED` from any non-terminal state: PLACED/PICKING/PACKED).
 
 ## Milestones (vertical slices — each shippable)
 1. **Catalog + inventory (read).** List products with current stock. Seeded data.
