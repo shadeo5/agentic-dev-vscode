@@ -82,3 +82,58 @@ any failure writes nothing.
 - **AC-4.18** *(int)* — For every rejection path (409 / 404), no partial state
   remains: order, line items, and reservations are all rolled back together
   (guaranteed by a single `db.transaction`).
+
+---
+
+## Slice 6 — Fulfillment transitions
+
+Context: orders advance through the state machine via one funnel,
+`POST /orders/:id/transition` (body `{ to }`), guarded by `canTransition`.
+Inventory effects happen on exactly two transitions: **FULFILLED** decrements
+on-hand AND releases the reservation (the goods leave); **CANCELLED** releases
+the reservation only (goods never left). All effects are transactional. Plus
+read endpoints for the fulfillment queue.
+
+### Legal transitions (no inventory effect)
+- **AC-6.1** *(int)* — Given a PLACED order, When `{ to: "PICKING" }`, Then 200,
+  status is PICKING, and no inventory changes.
+- **AC-6.2** *(int)* — PICKING → PACKED → 200, status PACKED, inventory unchanged.
+
+### Fulfillment — the only decrement
+- **AC-6.3** *(int)* — Given a PACKED order reserving N of product X (on_hand H,
+  reserved R), When `{ to: "FULFILLED" }`, Then 200, status FULFILLED, and X has
+  `quantity_on_hand = H − N` **and** `quantity_reserved = R − N` (decrement and
+  release together).
+- **AC-6.4** *(int)* — **Decrement-exactly-once:** Given a FULFILLED order, When
+  transitioned again, Then 409 and inventory is unchanged (FULFILLED is terminal,
+  so a double decrement is impossible).
+
+### Cancellation — release the reservation
+- **AC-6.5** *(int)* — Given a PLACED order reserving N of X, When
+  `{ to: "CANCELLED" }`, Then 200, status CANCELLED, X's `quantity_reserved`
+  drops by N, and `quantity_on_hand` is unchanged (goods never left).
+- **AC-6.6** *(int)* — Cancel is allowed from PACKED: a PACKED order →
+  CANCELLED returns 200 and releases the reservation.
+
+### Illegal transitions → 409
+- **AC-6.7** *(int)* — Given a PLACED order, When `{ to: "FULFILLED" }` (skips
+  states), Then 409; status and inventory unchanged.
+- **AC-6.8** *(int)* — Out of a terminal state (FULFILLED or CANCELLED), any
+  transition → 409.
+
+### Not found / malformed
+- **AC-6.9** *(int)* — Unknown order id → 404.
+- **AC-6.10** *(int)* — Body missing `to`, or `to` not a valid status → 400.
+- **AC-6.11** *(int)* — Malformed `:id` (non-numeric) → 400.
+
+### Atomicity
+- **AC-6.12** *(int)* — A rejected transition (409 / 404) leaves both order status
+  and inventory unchanged — no partial writes (single `db.transaction`).
+
+### Listing & detail (the fulfillment queue)
+- **AC-6.13** *(int)* — `GET /orders` returns all orders, each with its line items,
+  newest or id order.
+- **AC-6.14** *(int)* — `GET /orders?status=PLACED` returns only PLACED orders.
+- **AC-6.15** *(int)* — `GET /orders?status=BOGUS` (not a valid status) → 400.
+- **AC-6.16** *(int)* — `GET /orders/:id` returns the order with line items (200);
+  unknown id → 404; non-numeric id → 400.

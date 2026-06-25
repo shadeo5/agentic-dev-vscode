@@ -1,4 +1,5 @@
 import type { Shortfall } from "../domain/inventory";
+import type { OrderStatus } from "../domain/types";
 
 // Typed errors that carry their HTTP status. Services throw these to signal a
 // precise failure; the route layer catches AppError and maps it to a response,
@@ -26,5 +27,13 @@ export class NotFoundError extends AppError {
 export class InsufficientStockError extends AppError {
   constructor(shortfalls: Shortfall[]) {
     super("Insufficient stock", 409, shortfalls);
+  }
+}
+
+// The requested status change isn't legal from the order's current state → 409
+// (well-formed request, conflicts with current state).
+export class IllegalTransitionError extends AppError {
+  constructor(from: OrderStatus, to: OrderStatus) {
+    super(`Illegal transition: ${from} -> ${to}`, 409);
   }
 }

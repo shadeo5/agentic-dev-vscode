@@ -44,3 +44,22 @@ export function reserve(db: Db, productId: number, quantity: number): void {
     "UPDATE inventory_items SET quantity_reserved = quantity_reserved + ? WHERE product_id = ?",
   ).run(quantity, productId);
 }
+
+// Fulfill (→ FULFILLED): the goods physically leave, so decrement on-hand AND
+// release the reservation in ONE statement — a single UPDATE means the
+// reserved <= on_hand CHECK never sees a half-updated row.
+export function fulfill(db: Db, productId: number, quantity: number): void {
+  db.prepare(
+    `UPDATE inventory_items
+     SET quantity_on_hand = quantity_on_hand - ?, quantity_reserved = quantity_reserved - ?
+     WHERE product_id = ?`,
+  ).run(quantity, quantity, productId);
+}
+
+// Release (→ CANCELLED): the order never shipped, so free the reservation and
+// leave on-hand untouched.
+export function release(db: Db, productId: number, quantity: number): void {
+  db.prepare(
+    "UPDATE inventory_items SET quantity_reserved = quantity_reserved - ? WHERE product_id = ?",
+  ).run(quantity, productId);
+}
