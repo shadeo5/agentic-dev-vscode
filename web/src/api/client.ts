@@ -1,4 +1,4 @@
-import type { Product } from "./types";
+import type { Product, Order, OrderStatus } from "./types";
 
 // Tiny typed wrapper over fetch. Calls go to /api/*, which the Vite dev proxy
 // forwards to the API on :3000 — same-origin in the browser, so no CORS.
@@ -16,4 +16,9 @@ export function getProducts(): Promise<Product[]> {
 
 export function getHealth(): Promise<{ ok: boolean }> {
   return getJson<{ ok: boolean }>("/api/health");
+}
+
+export function getOrders(status?: OrderStatus): Promise<Order[]> {
+  const query = status ? `?status=${status}` : "";
+  return getJson<Order[]>(`/api/orders${query}`);
 }

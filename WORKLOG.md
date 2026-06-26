@@ -14,20 +14,21 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 ## ▶ Resume here — next session
 
 **Where we are:** M1–M3 backend **complete** (Slices 0–6). M4 front end: `web/`
-skeleton (M4.0), Prep A (available stock), and **M4.1 live stock view** done.
-`main` is branch-protected and gated on **both** CI checks (`api …` and `web …`).
-To run locally: API `cd api && npm run dev`; web `cd web && npm run dev` (Vite
-proxies `/api` → `:3000`).
+skeleton (M4.0), Prep A (available stock), **M4.1 live stock view**, and **M4.2
+fulfillment queue** done. `main` is branch-protected and gated on **both** CI
+checks (`api …` and `web …`). To run locally: API `cd api && npm run dev`; web
+`cd web && npm run dev` (Vite proxies `/api` → `:3000`).
 
-**Pick up here → M4.2 — Fulfillment queue:** an orders list from `GET /orders`
-with a status filter (the queue); rows show customer, status, and line items
-(product names joined client-side from the catalog). Read-only. Test-first, new
-`feat/` branch off `main`, one PR.
+**Pick up here → M4.3 — Advance & cancel orders (the interactive core):**
+per-order action buttons calling `POST /orders/:id/transition`, offering only
+legal next states (from the state machine), handling 409 / errors, refetching
+after. **Behavior-rich → gets acceptance criteria** (spec-first, like Slice 4/6).
+New `feat/` branch off `main`, one PR.
 
 **Roadmap to "done" (finish the project):**
 - [x] **M4.1** Live stock view
-- [ ] **M4.2** Fulfillment queue (`GET /orders` + `?status=` filter)  ← next
-- [ ] **M4.3** Advance & cancel orders (transition calls; *gets acceptance criteria*)
+- [x] **M4.2** Fulfillment queue (`GET /orders` + `?status=` filter)
+- [ ] **M4.3** Advance & cancel orders (transition calls; *gets acceptance criteria*)  ← next
 - [ ] **M4.4** Playwright e2e + polish
 - [ ] **M5** Low-stock alerts (`quantity_on_hand ≤ reorder_threshold`; later Slack)
 - [ ] **M6** Observability (request logging + a metrics summary endpoint)
@@ -39,6 +40,40 @@ with a status filter (the queue); rows show customer, status, and line items
       not StoreFlow) — refresh it.
 - [ ] `web/README.md` is default Vite boilerplate.
 - [ ] Stray `agentic-workflow-setup-guide.html` at repo root — confirm if wanted.
+
+---
+
+## 2026-06-25 — M4.2: Fulfillment queue (web/)
+
+**Scope:** The orders list an associate works — `GET /orders` with a status
+filter, line items shown by product name. Read-only (component tests are the spec).
+
+### Done
+- `api/client.ts` `getOrders(status?)`; `Order`/`OrderLineItem`/`OrderStatus`
+  added to `api/types.ts`; `formatDateTime` (Intl) in `format.ts`.
+- `OrderQueue` — `useQueue` hook fetches orders (filtered) + catalog together and
+  **joins product names client-side** (line items only carry `productId`); status
+  filter buttons (ALL + 5 states); color-coded status badges; loading/error/empty.
+- Composed into `App` below the stock view.
+- 5 component tests (render + name join, filter refetch, states), mocking the client.
+
+### Decisions (and why)
+- **Client-side product-name join** (PLAN §8 option a) — the dashboard already
+  has the catalog; no API change / no order-data denormalization.
+- **Fetch orders + catalog together per filter change** — simplest correct data
+  flow with vanilla hooks; products refetch is cheap.
+
+### Verification
+- `web/`: test (14 passed), typecheck, lint, build all green.
+- Visually confirmed (headless Chrome): placed 2 orders via the API, queue shows
+  #1 PLACED / #2 PICKING with joined names, and the stock view's reserved/available
+  columns updated to match.
+
+### Next up
+- **M4.3 — Advance & cancel orders** (transition actions; gets acceptance criteria).
+
+### PRs / branches
+- `#19` feat/m4.2-order-queue (this slice).
 
 ---
 
