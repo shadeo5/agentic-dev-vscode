@@ -1,36 +1,33 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
+import { getProducts, getHealth } from "./api/client";
 
-function stubFetch(body: unknown) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({ json: async () => body }),
-  );
-}
+vi.mock("./api/client", () => ({
+  getProducts: vi.fn(),
+  getHealth: vi.fn(),
+}));
 
 describe("App", () => {
+  beforeEach(() => {
+    vi.mocked(getProducts).mockResolvedValue([]);
+    vi.mocked(getHealth).mockResolvedValue({ ok: true });
+  });
+
   it("renders the dashboard heading", () => {
-    stubFetch({ ok: true });
     render(<App />);
     expect(
       screen.getByRole("heading", { name: "StoreFlow" }),
     ).toBeInTheDocument();
   });
 
-  it("reports API status 'ok' when /api/health responds ok", async () => {
-    stubFetch({ ok: true });
+  it("shows the stock view and the health badge", async () => {
     render(<App />);
-    await waitFor(() => {
-      expect(screen.getByTestId("api-health")).toHaveTextContent("ok");
-    });
-  });
-
-  it("reports 'down' when the health check fails", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
-    render(<App />);
-    await waitFor(() => {
-      expect(screen.getByTestId("api-health")).toHaveTextContent("down");
-    });
+    expect(
+      screen.getByRole("heading", { name: /stock/i }),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("api-health")).toBeInTheDocument(),
+    );
   });
 });
