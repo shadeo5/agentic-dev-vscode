@@ -11,23 +11,22 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 
 ---
 
-## ▶ Resume here — next session (as of 2026-06-24, end of day)
+## ▶ Resume here — next session
 
-**Where we are:** M1–M3 backend **complete** (Slices 0–6). M4 front end started:
-`web/` skeleton (M4.0) and Prep A (available stock) **merged**. `main` is branch-
-protected and gated on **both** CI checks (`api …` and `web …`). 0 open PRs,
-working tree clean.
+**Where we are:** M1–M3 backend **complete** (Slices 0–6). M4 front end: `web/`
+skeleton (M4.0), Prep A (available stock), and **M4.1 live stock view** done.
+`main` is branch-protected and gated on **both** CI checks (`api …` and `web …`).
+To run locally: API `cd api && npm run dev`; web `cd web && npm run dev` (Vite
+proxies `/api` → `:3000`).
 
-**Pick up here → M4.1 — Live stock view:** a typed API client in `web/` +
-duplicated `Product` type; a catalog page listing products with on-hand /
-reserved / available (Prep A fields), Tailwind-styled; RTL component tests with a
-mocked client. Read-only (no acceptance criteria). Test-first, new `feat/` branch
-off `main`, one PR. To run locally: API `cd api && npm run dev`; web
-`cd web && npm run dev` (Vite proxies `/api` → `:3000`).
+**Pick up here → M4.2 — Fulfillment queue:** an orders list from `GET /orders`
+with a status filter (the queue); rows show customer, status, and line items
+(product names joined client-side from the catalog). Read-only. Test-first, new
+`feat/` branch off `main`, one PR.
 
 **Roadmap to "done" (finish the project):**
-- [ ] **M4.1** Live stock view  ← next
-- [ ] **M4.2** Fulfillment queue (`GET /orders` + `?status=` filter)
+- [x] **M4.1** Live stock view
+- [ ] **M4.2** Fulfillment queue (`GET /orders` + `?status=` filter)  ← next
 - [ ] **M4.3** Advance & cancel orders (transition calls; *gets acceptance criteria*)
 - [ ] **M4.4** Playwright e2e + polish
 - [ ] **M5** Low-stock alerts (`quantity_on_hand ≤ reorder_threshold`; later Slack)
@@ -40,6 +39,40 @@ off `main`, one PR. To run locally: API `cd api && npm run dev`; web
       not StoreFlow) — refresh it.
 - [ ] `web/README.md` is default Vite boilerplate.
 - [ ] Stray `agentic-workflow-setup-guide.html` at repo root — confirm if wanted.
+
+---
+
+## 2026-06-25 — M4.1: Live stock view (web/)
+
+**Scope:** First real UI data — a typed API client + a catalog page showing live
+stock. Read-only (component tests are the spec; no acceptance criteria).
+
+### Done
+- `api/client.ts` (typed `fetch` wrapper: `getProducts`/`getHealth` → `/api/*`)
+  + `api/types.ts` (duplicated `Product`) + `format.ts` (`formatCents` via
+  `Intl.NumberFormat`).
+- `StockView` — `useProducts` hook (discriminated union: loading | error | ready)
+  + a Tailwind table (Product / SKU / Price / on-hand / reserved / **available**);
+  zero-available flagged red; loading / error / empty states.
+- Kept the health badge: extracted `HealthBadge` into the dashboard header.
+- 9 component tests (StockView 5, HealthBadge 2, App 2), mocking the client module.
+
+### Decisions (and why)
+- **`useProducts` discriminated union** — makes the three render states exhaustive
+  and type-safe (no "data might be undefined" footguns).
+- **Tests mock the client module** (not raw `fetch`) — cleaner, and avoids URL
+  collisions now there are two endpoints.
+- **`Intl.NumberFormat` for money** — correct rounding + symbol + thousands
+  separators; formatting stays at the view boundary (money is integer cents).
+
+### Verification
+- In `web/`: test (9 passed), typecheck (`tsc -b`), lint, build all green.
+
+### Next up
+- **M4.2 — Fulfillment queue:** orders list + status filter.
+
+### PRs / branches
+- `#18` feat/m4.1-stock-view (this slice).
 
 ---
 
