@@ -1,5 +1,6 @@
 import HealthBadge from "./components/HealthBadge";
 import StockView from "./components/StockView";
+import OrderQueue from "./components/OrderQueue";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         </header>
 
         <StockView />
+        <OrderQueue />
       </main>
     </div>
   );

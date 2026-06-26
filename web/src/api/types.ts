@@ -11,3 +11,24 @@ export interface Product {
   quantityReserved: number;
   available: number;
 }
+
+export type OrderStatus =
+  | "PLACED"
+  | "PICKING"
+  | "PACKED"
+  | "FULFILLED"
+  | "CANCELLED";
+
+export interface OrderLineItem {
+  productId: number;
+  quantity: number;
+  unitPriceCents: number;
+}
+
+export interface Order {
+  id: number;
+  status: OrderStatus;
+  customerName: string;
+  createdAt: string; // ISO-8601
+  lineItems: OrderLineItem[];
+}

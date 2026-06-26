@@ -1,17 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
-import { getProducts, getHealth } from "./api/client";
+import { getProducts, getHealth, getOrders } from "./api/client";
 
 vi.mock("./api/client", () => ({
   getProducts: vi.fn(),
   getHealth: vi.fn(),
+  getOrders: vi.fn(),
 }));
 
 describe("App", () => {
   beforeEach(() => {
     vi.mocked(getProducts).mockResolvedValue([]);
     vi.mocked(getHealth).mockResolvedValue({ ok: true });
+    vi.mocked(getOrders).mockResolvedValue([]);
   });
 
   it("renders the dashboard heading", () => {
