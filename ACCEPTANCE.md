@@ -137,3 +137,34 @@ read endpoints for the fulfillment queue.
 - **AC-6.15** *(int)* — `GET /orders?status=BOGUS` (not a valid status) → 400.
 - **AC-6.16** *(int)* — `GET /orders/:id` returns the order with line items (200);
   unknown id → 404; non-numeric id → 400.
+
+---
+
+## M4.3 — Advance & cancel orders (web/)
+
+Context: the dashboard's first **mutations**. Per-order action buttons drive
+`POST /orders/:id/transition`. The server's state machine remains the source of
+truth (it 409s an illegal transition); the client mirrors the legal transitions
+only to decide **which buttons to show**. Tests are component tests (`comp`,
+React Testing Library) and a pure unit test (`unit`) for the transition map.
+
+### Which actions appear
+- **AC-M4.3.1** *(unit)* — `nextActions(status)` returns: PLACED → Start picking,
+  Cancel · PICKING → Pack, Cancel · PACKED → Fulfill, Cancel · FULFILLED → none ·
+  CANCELLED → none. (Mirrors the server machine; cancel allowed through PACKED.)
+- **AC-M4.3.2** *(comp)* — A PLACED order renders **Start picking** + **Cancel**
+  buttons; a FULFILLED (terminal) order renders **no** action buttons.
+
+### Performing a transition
+- **AC-M4.3.3** *(comp)* — Clicking **Start picking** on order N calls
+  `transitionOrder(N, "PICKING")`.
+- **AC-M4.3.4** *(comp)* — On success, the dashboard **refetches** (the order
+  reflects its new status) and a **shared refresh** fires so the stock view's
+  reserved/available can update too.
+- **AC-M4.3.5** *(comp)* — While a transition is in flight, that order's action
+  buttons are **disabled** (no double-submit).
+
+### Errors
+- **AC-M4.3.6** *(comp)* — A failed transition (e.g. server 409) surfaces an
+  **inline error message** and leaves the queue resynced (a refetch follows), so
+  the UI never lies about state.

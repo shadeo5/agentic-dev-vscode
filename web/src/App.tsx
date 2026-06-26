@@ -1,8 +1,14 @@
+import { useState } from "react";
 import HealthBadge from "./components/HealthBadge";
 import StockView from "./components/StockView";
 import OrderQueue from "./components/OrderQueue";
 
 export default function App() {
+  // A shared refresh counter: when an order transition mutates state, bump it so
+  // both the stock view and the queue refetch and stay consistent.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = () => setRefreshKey((k) => k + 1);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="mx-auto max-w-3xl p-8">
@@ -14,8 +20,8 @@ export default function App() {
           <HealthBadge />
         </header>
 
-        <StockView />
-        <OrderQueue />
+        <StockView refreshKey={refreshKey} />
+        <OrderQueue refreshKey={refreshKey} onMutated={refresh} />
       </main>
     </div>
   );

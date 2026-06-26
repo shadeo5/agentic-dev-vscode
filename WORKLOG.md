@@ -14,21 +14,20 @@ notes Done / Decisions / Follow-ups / Verification, and links PRs and commits.
 ## ▶ Resume here — next session
 
 **Where we are:** M1–M3 backend **complete** (Slices 0–6). M4 front end: `web/`
-skeleton (M4.0), Prep A (available stock), **M4.1 live stock view**, and **M4.2
-fulfillment queue** done. `main` is branch-protected and gated on **both** CI
-checks (`api …` and `web …`). To run locally: API `cd api && npm run dev`; web
+skeleton (M4.0), Prep A, **M4.1 stock view**, **M4.2 queue**, and **M4.3 advance &
+cancel** done — the dashboard is fully interactive. `main` is branch-protected
+and gated on **both** CI checks. To run locally: API `cd api && npm run dev`; web
 `cd web && npm run dev` (Vite proxies `/api` → `:3000`).
 
-**Pick up here → M4.3 — Advance & cancel orders (the interactive core):**
-per-order action buttons calling `POST /orders/:id/transition`, offering only
-legal next states (from the state machine), handling 409 / errors, refetching
-after. **Behavior-rich → gets acceptance criteria** (spec-first, like Slice 4/6).
-New `feat/` branch off `main`, one PR.
+**Pick up here → M4.4 — e2e + polish (stretch):** Playwright e2e (seed → place →
+advance → fulfill, watch stock change) + loading/empty polish. Optional; M4's
+core is done. Alternatively, start M5 (low-stock alerts) or clear the parked items.
 
 **Roadmap to "done" (finish the project):**
 - [x] **M4.1** Live stock view
 - [x] **M4.2** Fulfillment queue (`GET /orders` + `?status=` filter)
-- [ ] **M4.3** Advance & cancel orders (transition calls; *gets acceptance criteria*)  ← next
+- [x] **M4.3** Advance & cancel orders (transition actions + shared refresh)
+- [ ] **M4.4** Playwright e2e + polish (stretch)  ← next (optional)
 - [ ] **M4.4** Playwright e2e + polish
 - [ ] **M5** Low-stock alerts (`quantity_on_hand ≤ reorder_threshold`; later Slack)
 - [ ] **M6** Observability (request logging + a metrics summary endpoint)
@@ -40,6 +39,41 @@ New `feat/` branch off `main`, one PR.
       not StoreFlow) — refresh it.
 - [ ] `web/README.md` is default Vite boilerplate.
 - [ ] Stray `agentic-workflow-setup-guide.html` at repo root — confirm if wanted.
+
+---
+
+## 2026-06-25 — M4.3: Advance & cancel orders (web/)
+
+**Scope:** The dashboard's first **mutations** — per-order action buttons drive
+the transition endpoint. Behavior-rich → **spec-first** (ACCEPTANCE.md AC-M4.3.x).
+
+### Done
+- `orderActions.ts` (pure `nextActions(status)` map, mirrors the server machine)
+  + `transitionOrder(id, to)` client method (`POST /orders/:id/transition`).
+- `OrderQueue`: legal action buttons per order (Start picking / Pack / Fulfill /
+  Cancel; none for terminal); in-flight disable (no double-submit); inline error
+  on failure; calls `onMutated` on success.
+- **Shared refresh**: `App` holds a `refreshKey`; a transition bumps it so the
+  queue **and** the stock view refetch (reserved/available stay consistent).
+- 9 tests (4 action-map unit + 5 OrderQueue action), tracing AC-M4.3.1–6.
+
+### Decisions (and why)
+- **Client-side action map mirrors the server** — decides *which buttons to show*
+  only; the server's state machine remains the source of truth (illegal → 409).
+- **Shared `refreshKey` lifted to App** — a fulfill/cancel changes stock, so both
+  components must refetch; a single counter keeps the whole dashboard consistent.
+- **Disable buttons while pending** — avoids double-submit / racing transitions.
+
+### Verification
+- `web/`: test (23 passed), typecheck, lint, build green.
+- Visually confirmed (headless Chrome): PLACED shows Start picking/Cancel,
+  PICKING shows Pack/Cancel — color-coded, wired to the live API.
+
+### Next up
+- **M4.4 — Playwright e2e + polish** (stretch), or M5 (low-stock alerts).
+
+### PRs / branches
+- `#20` feat/m4.3-order-actions (this slice).
 
 ---
 
