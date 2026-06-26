@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { getOrders, getProducts } from "../api/client";
+import { getOrders, getProducts, transitionOrder } from "../api/client";
 import type { Order, OrderStatus } from "../api/types";
 import { formatCents, formatDateTime } from "../format";
+import { nextActions } from "../orderActions";
 
 type Filter = "ALL" | OrderStatus;
 
@@ -27,10 +28,9 @@ type State =
   | { status: "error"; message: string }
   | { status: "ready"; orders: Order[]; names: Map<number, string> };
 
-// Fetch the orders (filtered) plus the catalog (for product names) together;
-// re-runs whenever the filter changes. Line items only carry productId, so we
-// join names client-side from the catalog (PLAN §8 — no API change).
-function useQueue(filter: Filter): State {
+// Fetch orders (filtered) + the catalog (for product names) together. Re-runs on
+// filter change and whenever `refreshKey` bumps (after a mutation elsewhere).
+function useQueue(filter: Filter, refreshKey: number): State {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
@@ -52,14 +52,36 @@ function useQueue(filter: Filter): State {
     return () => {
       active = false;
     };
-  }, [filter]);
+  }, [filter, refreshKey]);
 
   return state;
 }
 
-export default function OrderQueue() {
+interface Props {
+  // Bumped by the parent to force a refetch (kept in sync with the stock view).
+  refreshKey?: number;
+  // Called after a successful transition so the parent can refresh everything.
+  onMutated?: () => void;
+}
+
+export default function OrderQueue({ refreshKey = 0, onMutated }: Props) {
   const [filter, setFilter] = useState<Filter>("ALL");
-  const state = useQueue(filter);
+  const state = useQueue(filter, refreshKey);
+  const [pendingId, setPendingId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  async function act(id: number, to: OrderStatus) {
+    setPendingId(id);
+    setActionError(null);
+    try {
+      await transitionOrder(id, to);
+      onMutated?.(); // parent bumps refreshKey → queue + stock view refetch
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "transition failed");
+    } finally {
+      setPendingId(null);
+    }
+  }
 
   return (
     <section className="mt-10">
@@ -81,6 +103,12 @@ export default function OrderQueue() {
           </button>
         ))}
       </div>
+
+      {actionError && (
+        <p className="mt-3 text-sm text-red-600">
+          Couldn’t update order: {actionError}
+        </p>
+      )}
 
       {state.status === "loading" && (
         <p className="mt-3 text-sm text-gray-500">Loading…</p>
@@ -135,6 +163,26 @@ export default function OrderQueue() {
                   </li>
                 ))}
               </ul>
+
+              {nextActions(o.status).length > 0 && (
+                <div className="mt-3 flex gap-2">
+                  {nextActions(o.status).map((a) => (
+                    <button
+                      key={a.to}
+                      type="button"
+                      disabled={pendingId === o.id}
+                      onClick={() => act(o.id, a.to)}
+                      className={`rounded px-3 py-1 text-xs font-medium disabled:opacity-50 ${
+                        a.to === "CANCELLED"
+                          ? "bg-red-50 text-red-700 hover:bg-red-100"
+                          : "bg-gray-900 text-white hover:bg-gray-700"
+                      }`}
+                    >
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </li>
           ))}
         </ul>

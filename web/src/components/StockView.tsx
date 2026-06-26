@@ -10,7 +10,7 @@ type State =
 
 // Load the catalog once on mount. The discriminated union makes the three
 // render states (loading / error / ready) exhaustive and type-safe.
-function useProducts(): State {
+function useProducts(refreshKey: number): State {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
@@ -28,13 +28,17 @@ function useProducts(): State {
     return () => {
       active = false;
     };
-  }, []);
+  }, [refreshKey]);
 
   return state;
 }
 
-export default function StockView() {
-  const state = useProducts();
+interface Props {
+  refreshKey?: number;
+}
+
+export default function StockView({ refreshKey = 0 }: Props) {
+  const state = useProducts(refreshKey);
 
   return (
     <section className="mt-8">

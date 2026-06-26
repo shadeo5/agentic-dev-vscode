@@ -7,6 +7,7 @@ vi.mock("./api/client", () => ({
   getProducts: vi.fn(),
   getHealth: vi.fn(),
   getOrders: vi.fn(),
+  transitionOrder: vi.fn(),
 }));
 
 describe("App", () => {
